@@ -45,6 +45,9 @@ undercloud:
     - section: leaf0
       option: masquerade
       value: false
+    - section: leaf0
+      option: inspection_iprange
+      value: 192.168.122.100,192.168.122.190
 
     - section: leaf1
       option: cidr
@@ -55,6 +58,9 @@ undercloud:
     - section: leaf1
       option: masquerade
       value: false
+    - section: leaf1
+      option: inspection_iprange
+      value: 192.168.133.100,192.168.133.190
 
     - section: leaf2
       option: cidr
@@ -65,6 +71,9 @@ undercloud:
     - section: leaf2
       option: masquerade
       value: false
+    - section: leaf2
+      option: inspection_iprange
+      value: 192.168.144.100,192.168.144.190
   undercloud_parameters_override: "dcn/hieradata_overrides_undercloud.yaml"
   undercloud_parameters_defaults: "dcn/undercloud_parameter_defaults.yaml"
   ctlplane_vip: 192.168.122.98
