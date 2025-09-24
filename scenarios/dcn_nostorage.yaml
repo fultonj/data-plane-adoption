@@ -65,8 +65,8 @@ undercloud:
     - section: leaf2
       option: inspection_iprange
       value: 192.168.144.200,192.168.144.220
-  undercloud_parameters_override: "dcn/hieradata_overrides_undercloud.yaml"
-  undercloud_parameters_defaults: "dcn/undercloud_parameter_defaults.yaml"
+  undercloud_parameters_override: "dcn_nostorage/hieradata_overrides_undercloud.yaml"
+  undercloud_parameters_defaults: "dcn_nostorage/undercloud_parameter_defaults.yaml"
   ctlplane_vip: 192.168.122.98
 cloud_domain: "example.com"
 hostname_groups_map:
@@ -120,10 +120,10 @@ stacks:
       - "/usr/share/openstack-tripleo-heat-templates/environments/podman.yaml"
       - "/usr/share/openstack-tripleo-heat-templates/environments/low-memory-usage.yaml"
       - "/usr/share/openstack-tripleo-heat-templates/environments/debug.yaml"
-    network_data_file: "dcn/central/network_data.yaml.j2"
-    vips_data_file: "dcn/central/vips_data.yaml"
-    roles_file: "dcn/central/roles.yaml"
-    config_download_file: "dcn/central/config_download.yaml"
+    network_data_file: "dcn_nostorage/central/network_data.yaml.j2"
+    vips_data_file: "dcn_nostorage/central/vips_data.yaml"
+    roles_file: "dcn_nostorage/central/roles.yaml"
+    config_download_file: "dcn_nostorage/central/config_download.yaml"
     stack_nodes:
       - osp-computes
       - osp-controllers
@@ -150,14 +150,43 @@ stacks:
       - "/usr/share/openstack-tripleo-heat-templates/environments/low-memory-usage.yaml"
       - "/usr/share/openstack-tripleo-heat-templates/environments/debug.yaml"
       - "/home/zuul/overcloud-deploy/central/central-export.yaml"
-    network_data_file: "dcn/dcn1/network_data.yaml.j2"
-    vips_data_file: "dcn/dcn1/vips_data.yaml"
-    roles_file: "dcn/dcn1/roles.yaml"
-    config_download_file: "dcn/dcn1/config_download.yaml"
+    network_data_file: "dcn_nostorage/dcn1/network_data.yaml.j2"
+    vips_data_file: "dcn_nostorage/dcn1/vips_data.yaml"
+    roles_file: "dcn_nostorage/dcn1/roles.yaml"
+    config_download_file: "dcn_nostorage/dcn1/config_download.yaml"
     stack_nodes:
       - osp-dcn1-compute-az1s
     ctlplanenet: ctlplanedcn1
     routes:
       - ip_netmask: 0.0.0.0/0
         next_hop: 192.168.133.1
+        default: true
+  - stackname: dcn2
+    args:
+      - "--override-ansible-cfg /home/zuul/ansible_config.cfg"
+      - "--templates /usr/share/openstack-tripleo-heat-templates"
+      - "--libvirt-type qemu"
+      - "--timeout 90"
+      - "--overcloud-ssh-user zuul"
+      - "--deployed-server"
+      - "--validation-warnings-fatal"
+      - "--disable-validations"
+      - "--heat-type pod"
+      - "--disable-protected-resource-types"
+    vars:
+      - "/usr/share/openstack-tripleo-heat-templates/environments/docker-ha.yaml"
+      - "/usr/share/openstack-tripleo-heat-templates/environments/podman.yaml"
+      - "/usr/share/openstack-tripleo-heat-templates/environments/low-memory-usage.yaml"
+      - "/usr/share/openstack-tripleo-heat-templates/environments/debug.yaml"
+      - "/home/zuul/overcloud-deploy/central/central-export.yaml"
+    network_data_file: "dcn_nostorage/dcn2/network_data.yaml.j2"
+    vips_data_file: "dcn_nostorage/dcn2/vips_data.yaml"
+    roles_file: "dcn_nostorage/dcn2/roles.yaml"
+    config_download_file: "dcn_nostorage/dcn2/config_download.yaml"
+    stack_nodes:
+      - osp-dcn2-compute-az2s
+    ctlplanenet: ctlplanedcn2
+    routes:
+      - ip_netmask: 0.0.0.0/0
+        next_hop: 192.168.144.1
         default: true
