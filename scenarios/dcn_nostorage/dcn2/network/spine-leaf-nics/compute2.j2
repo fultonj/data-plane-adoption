@@ -1,0 +1,193 @@
+heat_template_version: wallaby
+description: >
+  Software Config to drive os-net-config for DCN2 compute nodes.
+  Routes are automatically populated from network_data.yaml.j2 via InterfaceRoutes parameters.
+
+parameters:
+  ControlPlaneIp:
+    default: ''
+    description: IP address/subnet on the ctlplane network
+    type: string
+  ControlPlaneSubnetCidr:
+    default: ''
+    description: The subnet CIDR of the control plane network.
+    type: string
+  ControlPlaneDefaultRoute:
+    default: ''
+    description: The default route of the control plane network.
+    type: string
+  ControlPlaneStaticRoutes:
+    default: []
+    description: Routes for the ctlplane network traffic.
+    type: json
+  ControlPlaneMtu:
+    default: 1500
+    description: The maximum transmission unit (MTU) size(in bytes)
+    type: number
+  StorageIpSubnet:
+    default: ''
+    description: IP address/subnet on the storage network
+    type: string
+  StorageNetworkVlanID:
+    default: 41
+    description: Vlan ID for the storage network traffic.
+    type: number
+  StorageMtu:
+    default: 1500
+    description: MTU for the storage network
+    type: number
+  StorageInterfaceRoutes:
+    default: []
+    description: Routes for the storage network traffic (auto-populated from network_data.yaml)
+    type: json
+  StorageMgmtIpSubnet:
+    default: ''
+    description: IP address/subnet on the storage_mgmt network
+    type: string
+  StorageMgmtNetworkVlanID:
+    default: 43
+    description: Vlan ID for the storage_mgmt network traffic.
+    type: number
+  StorageMgmtMtu:
+    default: 1500
+    description: MTU for the storage_mgmt network
+    type: number
+  StorageMgmtInterfaceRoutes:
+    default: []
+    description: Routes for the storage_mgmt network traffic (auto-populated from network_data.yaml)
+    type: json
+  InternalApiIpSubnet:
+    default: ''
+    description: IP address/subnet on the internal_api network
+    type: string
+  InternalApiNetworkVlanID:
+    default: 40
+    description: Vlan ID for the internal_api network traffic.
+    type: number
+  InternalApiMtu:
+    default: 1500
+    description: MTU for the internal_api network
+    type: number
+  InternalApiInterfaceRoutes:
+    default: []
+    description: Routes for the internal_api network traffic (auto-populated from network_data.yaml)
+    type: json
+  TenantIpSubnet:
+    default: ''
+    description: IP address/subnet on the tenant network
+    type: string
+  TenantNetworkVlanID:
+    default: 42
+    description: Vlan ID for the tenant network traffic.
+    type: number
+  TenantMtu:
+    default: 1500
+    description: MTU for the tenant network
+    type: number
+  TenantInterfaceRoutes:
+    default: []
+    description: Routes for the tenant network traffic (auto-populated from network_data.yaml)
+    type: json
+  DnsServers:
+    default: []
+    description: DNS servers
+    type: comma_delimited_list
+  DnsSearchDomains:
+    default: []
+    description: DNS search domains
+    type: comma_delimited_list
+  NeutronPublicInterface:
+    default: nic2
+    description: Interface to bridge onto br-ex
+    type: string
+
+resources:
+  OsNetConfigImpl:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config:
+        str_replace:
+          template:
+            get_file: /usr/share/openstack-tripleo-heat-templates/network/scripts/run-os-net-config.sh
+          params:
+            $network_config:
+              network_config:
+              - type: ovs_bridge
+                name: br-ex
+                mtu:
+                  get_param: ControlPlaneMtu
+                use_dhcp: false
+                dns_servers:
+                  get_param: DnsServers
+                domain:
+                  get_param: DnsSearchDomains
+                addresses:
+                - ip_netmask:
+                    list_join:
+                    - /
+                    - - get_param: ControlPlaneIp
+                      - get_param: ControlPlaneSubnetCidr
+                routes:
+                  list_concat_unique:
+                    - get_param: ControlPlaneStaticRoutes
+                    - - default: true
+                        next_hop:
+                          get_param: ControlPlaneDefaultRoute
+                members:
+                - type: interface
+                  name:
+                    get_param: NeutronPublicInterface
+                  mtu:
+                    get_param: ControlPlaneMtu
+                  primary: true
+                # InternalApiDCN2
+                - type: vlan
+                  mtu:
+                    get_param: InternalApiMtu
+                  vlan_id:
+                    get_param: InternalApiNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: InternalApiIpSubnet
+                  routes:
+                    get_param: InternalApiInterfaceRoutes
+                # StorageDCN2
+                - type: vlan
+                  mtu:
+                    get_param: StorageMtu
+                  vlan_id:
+                    get_param: StorageNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: StorageIpSubnet
+                  routes:
+                    get_param: StorageInterfaceRoutes
+                # TenantDCN2
+                - type: vlan
+                  mtu:
+                    get_param: TenantMtu
+                  vlan_id:
+                    get_param: TenantNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: TenantIpSubnet
+                  routes:
+                    get_param: TenantInterfaceRoutes
+                # StorageMgmtDCN2
+                - type: vlan
+                  mtu:
+                    get_param: StorageMgmtMtu
+                  vlan_id:
+                    get_param: StorageMgmtNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: StorageMgmtIpSubnet
+                  routes:
+                    get_param: StorageMgmtInterfaceRoutes
+
+outputs:
+  OS::stack_id:
+    description: The OsNetConfigImpl resource.
+    value:
+      get_resource: OsNetConfigImpl

@@ -62,6 +62,7 @@ parameter_defaults:
   CloudNameCtlplane: overcloud.ctlplane.example.com
   CloudDomain: example.com
   NetworkConfigWithAnsible: false
+  ComputeDcn2NetworkConfigTemplate: /home/stack/dcn2/network/spine-leaf-nics/compute2.j2
   ControllerHostnameFormat: '%stackname%-controller-%index%'
   ComputeDcn2HostnameFormat: '%stackname%-compute2-%index%'
   ComputeDcn2ControlPlaneSubnet: leaf2
