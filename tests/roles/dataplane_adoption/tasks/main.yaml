@@ -564,6 +564,11 @@
 
     for i in $(seq $TRIES)
     do
+        # Refresh token every 10 iterations (5 minutes) to prevent expiration
+        if [ $((i % 10)) -eq 0 ]; then
+            {{ oc_header }}
+        fi
+
         ready=$(oc get osdpd/$DEPLOYMENT_NAME -o jsonpath='{.status.conditions[0].status}')
         if [ "$ready" == "True" ]; then
             echo "Deployment is Ready"
